@@ -1,6 +1,8 @@
 import math
 import random
 
+random.seed(0)
+
 # arbitrary choice
 KING = 12
 
@@ -52,10 +54,16 @@ class Pile:
         return self.cards.pop()
 
 def one_hand(simcount):
+    debug = False
+
     # one deck
     d = Deck()
-    # shuffle it
+    
+    # shuffle it 3 times
     d.shuffle()
+    d.shuffle()
+    d.shuffle()
+
     # make 12 piles
     piles = []
     for i in range(12):
@@ -68,40 +76,53 @@ def one_hand(simcount):
         if index==12:
             index = 0
 
+    if debug:
+        print(d)
 
-    print("running simcount",simcount)
+
+    # print("running simcount",simcount)
     # grab the top card that is left from the deck
     mycard = d.pop()
     loopcount=0
     king_count = 0
+    
+    def check_for_end():
+        if king_count==3:
+            return True
+        return False
+    
     while True:
-        # print(loopcount,"start of loop...")
-        # print("mycard",mycard)
+        if debug:
+            print(loopcount,"start of loop...")
+            print("mycard",mycard)
 
         if mycard.rank == KING:
             # print("mycard is a KING need to get a new card",mycard)
             # bump up the king count
             king_count += 1
             # if we have them all we are done
-            if king_count==3:
-                print("king count was 3 we are done")
+            if check_for_end():
+                # print("king count was 3 we are done")
                 break
             # pull a new card
             mycard = d.pop()
             if mycard.rank==KING:
-                # print("WTF we pulled a 2nd king")
+                if debug:
+                    print("WTF we pulled a 2nd king")
                 # bad luck we pulled a king!
                 king_count += 1
-                if king_count==3:
-                    print("king count was 3 we are done")
+                if check_for_end():
+                    # print("king count was 3 we are done")
                     break
                 # pull a new card
                 mycard = d.pop()
                 if mycard.rank == KING:
-                    print("WTF we pulled a 3rd king ... impossible")
+                    if debug:
+                        print("CASE3: king3 count bumped",simcount)
+                        print("WTF we pulled a 3rd king ... impossible")
                     king_count += 1
-                    if king_count==3:
-                        print("king count was 3 we are done")
+                    if check_for_end():
+                        # print("WTF king count was 3 we are done")
                         break
 
         # pile we care about
@@ -128,7 +149,7 @@ def one_hand(simcount):
             for j,jv in enumerate(v.cards):
                 if i==jv.rank:
                     in_place += 1
-        print("in place is",in_place)
+        # print("in place is",in_place)
         return in_place
 
     """
@@ -144,14 +165,16 @@ def one_hand(simcount):
 
 index = 0
 win_count = 0
+SIM_COUNT=10000
 while True:
     res = one_hand(index)
     index += 1
     if res==48: # this is a win!
         win_count += 1
     
-    if index>110000:
+    if index>SIM_COUNT:
         break
-print("index",index)
-print("win count",win_count)
 
+print("count of simulations:",index-1)
+print("win count",win_count)
+print("percentage of wins", 100.0*(win_count/(index-1.0)))
