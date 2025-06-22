@@ -2,4 +2,4 @@
 
 all :
 	g++ -o crud test.cpp
-	nim c k.nim
+	nim c t.nim

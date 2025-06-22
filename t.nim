@@ -5,14 +5,14 @@ const KING=12
 
 type Card = object
     val : int
-
-func suit(c:Card) : int =
-    return divmod(c.val,13)[0]
-func rank(c:Card) : int =
-    return divmod(c.val,13)[1]
+    rank : int
+    suit : int
 
 func initCard(v:int) : Card =
     result.val = v
+    let tmp = divmod(v,13)
+    result.suit = tmp[0]
+    result.rank = tmp[1]
 
 type Pile = object
     cards : seq[Card]
@@ -73,41 +73,48 @@ proc onehand() =
         return kingcount==3
 
     var loopcounter = 0
-                    
+    
+    proc draw_card() =
+
+        var done = false
+        while not done:
+            # grab a card
+            mycard = deck.pop()
+            if mycard.rank == KING:
+                kingcount+=1
+                if check_for_end():
+                    echo("check for end said game was over!")
+                    done = true
+                    continue
+            else:
+                # we are done we got a card
+                # it was not a king
+                done = true
+                continue
+
     echo("deck before we start loop ",deck)
+    # this will set the value of mycard
+    draw_card()
+
     while true:
         echo("start of loop",loopcounter)
-
-        block findACard:
-            while true:
-                # pull a card
-                mycard = deck.pop()
-                echo("we pulled a card ",mycard)
-                # if it is a king
-                if mycard.rank()==KING:
-                    echo("we found a king")
-                    # bump the kingcount
-                    kingcount+=1
-                    # are we done
-                    if check_for_end():
-                        echo("we found all the kings")
-                        break # totally done
-                else:
-                    echo("we are leaving findACard")
-                    break findACard                
-
-        echo("start of block mycard is ",mycard," rank is ",mycard.rank())
-
-        echo("rank of mycard",mycard.rank())
-        let r = mycard.rank()
+        echo("rank of mycard",mycard.rank)
+        let r = mycard.rank
         let newcard = piles[r].pop()
         echo("newcard is set to",newcard)
-        piles[r].push_front(mycard)
-        echo("piles value",piles[mycard.rank()])
+        if newcard.rank == KING:
+            echo("the card pulled from the board was a king!")
+            kingcount+=1
+            draw_card()
+        else:
+            piles[r].push_front(mycard)
+            echo("piles value",piles[mycard.rank])
         
         echo("")
 
         loopcounter+=1
-        
+        if loopcounter==4:
+            echo("stopping for loopcounter")
+            break
 
 onehand()
