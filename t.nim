@@ -2,7 +2,9 @@ from random import shuffle, randomize
 from math import divmod
 from std/times import getTime, toUnix, nanosecond
 
-randomize()
+let now = getTime()
+let seed = now.toUnix * 1_000_000_000 + now.nanosecond 
+randomize(seed)
 
 const KING=12
 
@@ -31,6 +33,37 @@ func push_front(self:var Pile,c:Card) =
     self.cards.insert(c,0)
 func pop(self:var Pile) : Card =
     return self.cards.pop()
+
+proc testDeals() : bool =
+    # create a deck and shuffle it
+    var deck = initPile()
+    for i in 0..51:
+        deck.push(initCard(i))
+    shuffle(deck.cards)
+
+    # setup the piles
+    var piles : array[12,Pile]
+    for i in 0..11:
+        piles[i] = initPile()
+
+    # deal cards into the piles
+    var index = 0
+    for i in 0..47:
+        piles[index].push(deck.pop())
+        index = index + 1
+        if index==12:
+            index = 0
+    
+    var king_count = 0
+    for i in 0..3:
+        if deck.cards[i].rank==KING:
+            king_count+=1
+
+    if king_count==4:
+        echo("deck: ",deck)
+        return true
+    return false    
+
 
 proc onehand() : bool =
 
@@ -81,8 +114,6 @@ proc onehand() : bool =
     
     func check_for_end() : bool =
         return kingcount==3
-
-    var loopcounter = 0
     
     proc draw_card() : bool =
 
@@ -108,46 +139,55 @@ proc onehand() : bool =
     var game_over = draw_card()
     if game_over:
         echo("WOW game was over before it started")
-        # printPiles()
-        return scorePiles()
+        printPiles()
+        discard scorePiles()
+        echo("DECK is ",deck)
+        quit(0)
         
 
     while true:
         # echo("start of loop",loopcounter)
-        # echo("rank of mycard",mycard.rank)
-        
-        let r = mycard.rank
-        piles[r].push_front(mycard)
-        let newcard = piles[r].pop()
-        # echo("newcard is set to",newcard)
+
+        # push the card onto the pile        
+        piles[mycard.rank].push_front(mycard)
+
+        # pull a new card from the same pile
+        let newcard = piles[mycard.rank].pop()
+
+        # it might be a kind too
         if newcard.rank == KING:
-            # echo("the card pulled from the board was a king!")
             kingcount+=1
+            # game could be over
             if check_for_end():
-                # echo("game is over")
-                # printPiles()
                 return scorePiles()
+            # since we pulled a king from the piles
+            # we have to now draw from the main pile
             game_over = draw_card()
+            # and the game could end here too
             if game_over:
-                # echo("game is over!")
-                # printPiles()
                 return scorePiles()
         else:
+            # the card pulled from the bottom of the pile
+            # was not a king so just keep on going
             mycard = newcard
-        
-        # echo("")
 
-        loopcounter+=1
+proc realsim() =
+    var wincount=0
+    var loscount=0
+    const SIMCOUNT = 100_000
+    for i in 0..SIMCOUNT:
+        let r = onehand()
+        if r:
+            wincount+=1
+        else:
+            loscount+=1
+    echo("wincount    : ",wincount)
+    echo("losecount   : ",loscount)
+    echo("percent win : ", wincount/loscount*100.0)
 
-var wincount=0
-var loscount=0
-const SIMCOUNT = 100_000
-for i in 0..SIMCOUNT:
-    let r = onehand()
-    if r:
-        wincount+=1
-    else:
-        loscount+=1
-echo("wincount    : ",wincount)
-echo("losecount   : ",loscount)
-echo("percent win : ", wincount/loscount*100.0)
+realsim()
+
+proc testDealsSim() =
+    const SIMCOUNT=100000
+    for i in 0..SIMCOUNT:
+        let r = testDeals()
